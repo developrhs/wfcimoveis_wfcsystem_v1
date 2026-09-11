@@ -3,10 +3,12 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.wfcimoveis</groupId>
   <artifactId>wfcsystem-v1</artifactId>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
   <properties><maven.compiler.release>17</maven.compiler.release><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding></properties>
   <dependencies>
     <dependency><groupId>org.xerial</groupId><artifactId>sqlite-jdbc</artifactId><version>3.46.1.0</version></dependency>
+    <dependency><groupId>commons-net</groupId><artifactId>commons-net</artifactId><version>3.11.1</version></dependency>
+    <dependency><groupId>com.google.code.gson</groupId><artifactId>gson</artifactId><version>2.11.0</version></dependency>
   </dependencies>
   <build><plugins>
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.13.0</version><configuration><release>17</release></configuration></plugin>
