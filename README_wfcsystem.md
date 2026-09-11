@@ -11,14 +11,14 @@ Requisitos: Java 17+ e Maven 3.9+.
 ```bash
 cp config.properties.example config.properties
 mvn clean package
-java -jar target/wfcsystem-v1-0.1.1.jar
+java -jar target/wfcsystem-v1-0.1.2.jar
 ```
 
 ## Login e banco
 
-A aplicação verifica `/health` antes de enviar o login. Se a API retornar `DB_CONNECTION_FAILED`, a correção deve ser feita no servidor, em `config/local.php` ou nas variáveis de ambiente da API: `WFC_DB_HOST`, `WFC_DB_NAME`, `WFC_DB_USER` e `WFC_DB_PASS`.
+A aplicação verifica `/health` antes de enviar o login. Se a API retornar `DB_CONNECTION_FAILED` ou `DB_CONFIG_MISSING`, a correção deve ser feita no servidor, em `config/local.php` ou nas variáveis de ambiente da API: `WFC_DB_HOST`, `WFC_DB_NAME`, `WFC_DB_USER` e `WFC_DB_PASS`.
 
-Para a API PHP hospedada no mesmo ambiente, usar o host MySQL indicado no cPanel (em muitos planos, `localhost`), o nome completo do banco e usuário com o prefixo da conta, a senha correta e a porta `3306`. O MySQL Workbench, quando acessa externamente, também exige que o IP público seja liberado em **Remote MySQL**; essa regra é do acesso externo e não deve levar o desktop a conectar diretamente no banco.
+Para a API PHP hospedada no mesmo ambiente, usar o host MySQL indicado no cPanel (em muitos planos, `localhost`), o nome completo do banco e usuário com o prefixo da conta, a senha exclusiva do usuário MySQL e a porta `3306`. O MySQL Workbench, quando acessa externamente, também exige que o IP público seja liberado em **Remote MySQL** e usa o nome do servidor do plano; essa regra é do acesso externo e não deve levar o desktop a conectar diretamente no banco.
 
 ## FTP
 

@@ -16,3 +16,26 @@ No backend, conferir `deploy/wfc_sistema/api/config/local.php` (fora do Git) ou 
 Se a conexão for feita externamente pelo MySQL Workbench, o cPanel precisa liberar o IP público atual em **Remote MySQL** e o servidor/porta/usuário devem ser os informados pelo HostGator. Essa regra de allowlist é aplicável ao Workbench, mas não substitui a configuração da API PHP. O desktop continua acessando apenas HTTPS.
 
 Após corrigir o backend, validar novamente `/health` esperando HTTP 200 e então testar `/auth/login` no aplicativo. Nenhuma senha de cPanel, FTP ou banco deve ser commitada no repositório.
+
+## 2026-09-11 13:28 (America/Sao_Paulo)
+
+- Revisado o repositório desktop correto `developrhs/wfcimoveis_wfcsystem_v1`; o repositório web `developrhs/wfcimoveis_com` permanece separado.
+- Confirmado que o desktop Java acessa somente a API HTTPS e não deve receber usuário, senha ou porta do MySQL diretamente.
+- Atualizada a versão Maven de `0.1.1` para `0.1.2`; o artefato esperado passa a ser `wfcsystem-v1-0.1.2.jar`.
+- Atualizado o README para distinguir `DB_CONFIG_MISSING` de `DB_CONNECTION_FAILED` e registrar a regra HostGator: o PHP usa o host indicado no cPanel (frequentemente `localhost`), banco e usuário com prefixo da conta, senha do usuário MySQL e porta 3306.
+- A regra de liberação de IP em Remote MySQL é necessária para o Workbench externo, mas não substitui a configuração da API PHP; o desktop continua usando HTTPS.
+- Nenhuma credencial recebida foi gravada em arquivo, commit ou artefato.
+- Próxima validação: executar o build Maven e confirmar o endpoint `/health` com HTTP 200 após a correção do `local.php`/variáveis no HostGator.
+
+## 2026-09-11 13:29 (America/Sao_Paulo)
+
+- O primeiro build falhou porque o ambiente tinha apenas o JRE; o JDK 21 foi instalado e a compilação Maven foi concluída com sucesso usando `maven.compiler.release=17`.
+- Artefato gerado: `target/wfcsystem-v1-0.1.2.jar`.
+- SHA-256 do JAR: `10ff17ee44b46a7a251fbf74d7c9006eff555230c41666d11ab8793ae0e3c36e`.
+- O JAR contém o manifesto com `com.wfcimoveis.wfcsystem.Main` como classe principal.
+- Não foi feita tentativa de login usando a senha de cPanel/FTP fornecida; essas credenciais não são equivalentes à senha do usuário MySQL e não devem ser embutidas no desktop.
+
+## 2026-09-11 13:30 (America/Sao_Paulo)
+
+- Nova verificação segura de `GET https://wfcimoveis.com/sistema/api/v1/health`: HTTP `503`, sem autenticação e sem envio de senha; o backend ainda não comprova conexão MySQL funcional.
+- `mvn test` concluído com sucesso e o manifesto do JAR confirma `Main-Class: com.wfcimoveis.wfcsystem.Main`.
