@@ -1,0 +1,9 @@
+# Copie este arquivo para config.properties e preencha apenas os valores do seu ambiente.
+app.name=WFCSystem v1
+# API HTTP/HTTPS que expõe POST /auth/login e retorna JSON contendo token em caso de sucesso.
+api.baseUrl=https://SEU_BACKEND_EXEMPLO
+support.name=Suporte WFC Imóveis
+support.email=defina-o-email-de-suporte
+support.phone=defina-o-telefone-de-suporte
+# Não coloque senhas, CPF, service_role ou credenciais FTP neste arquivo.
+# FTP deve ser configurado posteriormente em um cliente seguro, com usuário restrito à pasta de mídia.
