@@ -57,3 +57,13 @@ Após corrigir o backend, validar novamente `/health` esperando HTTP 200 e entã
 - Implementados os clientes HTTP para `POST /sync/push` e `GET /sync/pull?since=...`; enquanto a API não disponibilizar esses endpoints, as alterações permanecem preservadas na fila SQLite.
 - Build `mvn clean test package` aprovado com JDK 17; o artefato recomendado é o JAR standalone com o driver SQLite incluído.
 - Teste de fumaça confirmou a criação de `wfcsystem.db` em um diretório de usuário temporário.
+
+## 2026-09-11 16:33 (America/Sao_Paulo)
+
+- Corrigido o login do modo offline: não existe mais entrada direta sem autenticação.
+- Adicionado cadastro local inicial dos quatro usuários fornecidos, com dados de perfil e contato no SQLite.
+- As senhas iniciais não foram armazenadas em texto aberto; foram convertidas para hashes PBKDF2-HMAC-SHA256 com salt individual.
+- Usuário desconhecido, senha incorreta, username vazio ou conta inativa são rejeitados antes de abrir a tela principal.
+- Em indisponibilidade da API, o login online tenta fallback local somente após validar o cadastro e a senha no banco local.
+- O primeiro username aparece pré-preenchido por conveniência; a senha permanece vazia e precisa ser digitada.
+- Teste de fumaça confirmou login válido aceito e senha inválida/usuário inexistente rejeitados.

@@ -27,6 +27,12 @@ As tabelas locais incluem `app_meta`, `local_records` e `sync_queue`. O modo off
 
 O banco local não armazena senhas de cPanel, FTP, phpMyAdmin ou MySQL.
 
+## Usuários locais
+
+Na primeira inicialização, o SQLite cadastra os quatro usuários operacionais fornecidos para o sistema, preservando nome, CPF, e-mail, WhatsApp, perfil e CRECI. As senhas iniciais são gravadas apenas como hashes PBKDF2 com salt individual; não há senha em texto aberto no código, no JAR ou no log.
+
+O modo offline não é um atalho: username vazio, usuário inexistente, usuário inativo ou senha incorreta são rejeitados. O primeiro username cadastrado aparece preenchido apenas como conveniência visual, enquanto o campo de senha permanece vazio. A autenticação online continua sendo preferencial; o fallback local só ocorre quando a API está indisponível.
+
 ## Cofre de credenciais
 
 A tela **Configurações > Credenciais criptografadas** permite cadastrar dados operacionais no computador autorizado. O arquivo é salvo em:
