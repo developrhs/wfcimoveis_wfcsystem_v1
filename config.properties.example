@@ -2,6 +2,7 @@
 app.name=WFCSystem v1
 # A API usa sessão HTTP; não é necessário token JWT nesta primeira versão.
 api.baseUrl=https://wfcimoveis.com/sistema/api/v1
+# O cliente verifica /health antes do login; o banco é acessado somente pela API PHP.
 support.name=Suporte WFC Imóveis
 support.email=defina-o-email-de-suporte
 support.phone=defina-o-telefone-de-suporte

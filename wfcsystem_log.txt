@@ -1,0 +1,18 @@
+# WFCSystem v1 — log técnico
+
+## 2026-09-11 12:29 (America/Sao_Paulo)
+
+- Repositório `developrhs/wfcimoveis_wfcsystem_v1` clonado e revisado.
+- Os arquivos `README_wfcsystem.md` e `wfcsystem_log.txt` não existiam no clone; este log foi criado para manter o histórico solicitado.
+- O cliente desktop Java utiliza corretamente a API PHP com sessão HTTP e **não deve** armazenar ou usar credenciais MySQL diretamente.
+- Verificação pública: `GET https://wfcimoveis.com/sistema/api/v1/health` respondeu HTTP `503` com `{"ok":false,"error":"Serviço indisponível.","code":"DB_CONNECTION_FAILED"}`.
+- Conclusão: o login não pode funcionar enquanto a API PHP não conseguir abrir a conexão MySQL.
+- Alteração da versão 0.1.1: antes de enviar credenciais, o cliente consulta `/health` e exibe uma mensagem específica para `DB_CONNECTION_FAILED`, evitando a falsa impressão de que o problema está na tela de login.
+
+## Correção necessária no HostGator
+
+No backend, conferir `deploy/wfc_sistema/api/config/local.php` (fora do Git) ou as variáveis equivalentes: `WFC_DB_HOST`, `WFC_DB_NAME`, `WFC_DB_USER` e `WFC_DB_PASS`. Para uma API PHP hospedada na mesma conta, o host normalmente deve ser o host MySQL indicado no cPanel, frequentemente `localhost`; o nome do banco e do usuário devem incluir o prefixo da conta cPanel. A porta padrão é `3306`.
+
+Se a conexão for feita externamente pelo MySQL Workbench, o cPanel precisa liberar o IP público atual em **Remote MySQL** e o servidor/porta/usuário devem ser os informados pelo HostGator. Essa regra de allowlist é aplicável ao Workbench, mas não substitui a configuração da API PHP. O desktop continua acessando apenas HTTPS.
+
+Após corrigir o backend, validar novamente `/health` esperando HTTP 200 e então testar `/auth/login` no aplicativo. Nenhuma senha de cPanel, FTP ou banco deve ser commitada no repositório.
