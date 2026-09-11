@@ -2,74 +2,26 @@ package com.wfcimoveis.wfcsystem;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.net.*;
+import java.net.http.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.nio.file.*;
 import java.time.Duration;
-import java.util.Properties;
+import java.util.*;
+import java.util.regex.*;
 
 public final class Main {
-    private static final Properties CONFIG = new Properties();
-    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).build();
-    private static JFrame frame;
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> { loadConfig(); showLogin(); });
-    }
-
-    private static void loadConfig() {
-        Path file = Path.of("config.properties");
-        try (InputStream in = Files.exists(file) ? Files.newInputStream(file) : Main.class.getResourceAsStream("/config.properties.example")) {
-            if (in != null) CONFIG.load(in);
-        } catch (IOException ignored) { }
-    }
-
-    private static void showLogin() {
-        frame = new JFrame(value("app.name", "WFCSystem v1") + " — Login");
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setSize(430, 310); frame.setLocationRelativeTo(null);
-        JPanel root = new JPanel(new BorderLayout(10, 10)); root.setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 22));
-        JLabel title = new JLabel("Acesso ao sistema", SwingConstants.CENTER); title.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 20)); root.add(title, BorderLayout.NORTH);
-        JPanel form = new JPanel(new GridLayout(5, 1, 6, 6));
-        JTextField username = new JTextField(); JPasswordField password = new JPasswordField();
-        form.add(new JLabel("Usuário ou e-mail")); form.add(username); form.add(new JLabel("Senha")); form.add(password);
-        JButton login = new JButton("Entrar"); form.add(login); root.add(form, BorderLayout.CENTER);
-        JLabel support = new JLabel("Suporte: " + value("support.name", "Suporte WFC Imóveis"), SwingConstants.CENTER); root.add(support, BorderLayout.SOUTH);
-        login.addActionListener(e -> login(username.getText().trim(), new String(password.getPassword())));
-        password.addActionListener(e -> login.doClick()); frame.setContentPane(root); frame.setVisible(true); username.requestFocusInWindow();
-    }
-
-    private static void login(String username, String password) {
-        if (username.isBlank() || password.isBlank()) { message("Informe usuário e senha.", JOptionPane.WARNING_MESSAGE); return; }
-        String base = value("api.baseUrl", "").replaceAll("/$", "");
-        if (base.isBlank() || base.contains("(") || base.contains("SEU")) { message("Configure api.baseUrl no arquivo config.properties antes de entrar.", JOptionPane.WARNING_MESSAGE); return; }
-        try {
-            String json = "{\"username\":\"" + jsonEscape(username) + "\",\"password\":\"" + jsonEscape(password) + "\"}";
-            HttpRequest request = HttpRequest.newBuilder(URI.create(base + "/auth/login")).timeout(Duration.ofSeconds(20)).header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(json)).build();
-            HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() >= 200 && response.statusCode() < 300 && response.body().contains("token")) { showHome(username, response.body()); }
-            else message("Login não autorizado ou API ainda não configurada. HTTP " + response.statusCode(), JOptionPane.ERROR_MESSAGE);
-        } catch (Exception ex) { message("Não foi possível conectar à API: " + ex.getMessage(), JOptionPane.ERROR_MESSAGE); }
-    }
-
-    private static void showHome(String username, String response) {
-        frame.getContentPane().removeAll(); frame.setTitle(value("app.name", "WFCSystem v1"));
-        JMenuBar menu = new JMenuBar(); for (String item : new String[]{"Início", "Imóveis", "Clientes", "Agentes", "Prova social", "Vendas", "Usuários", "Configurações"}) menu.add(new JMenu(item));
-        JMenu sair = new JMenu("Sair"); sair.addMenuListener(new javax.swing.event.MenuListener() { public void menuSelected(javax.swing.event.MenuEvent e) { frame.dispose(); showLogin(); } public void menuDeselected(javax.swing.event.MenuEvent e) {} public void menuCanceled(javax.swing.event.MenuEvent e) {} }); menu.add(sair); frame.setJMenuBar(menu);
-        JPanel panel = new JPanel(new BorderLayout(12, 12)); panel.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
-        JLabel welcome = new JLabel("Login realizado: " + username); welcome.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 18)); panel.add(welcome, BorderLayout.NORTH);
-        JTextArea info = new JTextArea("WFCSystem v1\n\nEste é o primeiro corpo do aplicativo.\nUse o menu superior para os próximos módulos.\n\nSUPORTE\n" + value("support.name", "Suporte WFC Imóveis") + "\n" + value("support.email", "(definir e-mail)") + "\n" + value("support.phone", "(definir telefone)")); info.setEditable(false); info.setOpaque(false); info.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 15)); panel.add(info, BorderLayout.CENTER);
-        frame.setContentPane(panel); frame.setSize(780, 480); frame.setLocationRelativeTo(null); frame.revalidate(); frame.repaint();
-    }
-
-    private static String value(String key, String fallback) { return CONFIG.getProperty(key, fallback); }
-    private static String jsonEscape(String value) { return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n"); }
-    private static void message(String text, int type) { JOptionPane.showMessageDialog(frame, text, value("app.name", "WFCSystem v1"), type); }
+  static final Properties C=new Properties(); static final CookieManager CM=new CookieManager(null,CookiePolicy.ACCEPT_ALL);
+  static final HttpClient HTTP=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).cookieHandler(CM).build(); static JFrame frame; static String user="";
+  public static void main(String[] a){SwingUtilities.invokeLater(()->{load();loginScreen();});}
+  static void load(){try(InputStream i=Files.exists(Path.of("config.properties"))?Files.newInputStream(Path.of("config.properties")):Main.class.getResourceAsStream("/config.properties.example")){if(i!=null)C.load(i);}catch(IOException ignored){}}
+  static void loginScreen(){frame=new JFrame(v("app.name","WFCSystem v1")+" — Login");frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);frame.setSize(460,330);frame.setLocationRelativeTo(null);JPanel p=new JPanel(new BorderLayout(10,10));p.setBorder(BorderFactory.createEmptyBorder(18,22,18,22));JLabel t=new JLabel("Acesso ao sistema",SwingConstants.CENTER);t.setFont(new Font(Font.SANS_SERIF,Font.BOLD,20));p.add(t,BorderLayout.NORTH);JPanel f=new JPanel(new GridLayout(5,1,6,6));JTextField id=new JTextField();JPasswordField pw=new JPasswordField();f.add(new JLabel("Usuário ou e-mail"));f.add(id);f.add(new JLabel("Senha"));f.add(pw);JButton b=new JButton("Entrar");f.add(b);p.add(f,BorderLayout.CENTER);p.add(new JLabel("Suporte: "+v("support.name","Suporte WFC Imóveis"),SwingConstants.CENTER),BorderLayout.SOUTH);b.addActionListener(e->login(id.getText().trim(),new String(pw.getPassword())));pw.addActionListener(e->b.doClick());frame.setContentPane(p);frame.setVisible(true);id.requestFocusInWindow();}
+  static void login(String id,String pw){if(id.isBlank()||pw.isBlank()){msg("Informe usuário e senha.",JOptionPane.WARNING_MESSAGE);return;}String base=api();if(base.isBlank()){msg("Configure api.baseUrl no arquivo config.properties.\n\nUse: https://wfcimoveis.com/sistema/api/v1",JOptionPane.WARNING_MESSAGE);return;}try{String body="{\"identity\":\""+esc(id)+"\",\"password\":\""+esc(pw)+"\"}";HttpRequest q=HttpRequest.newBuilder(URI.create(base+"/auth/login")).timeout(Duration.ofSeconds(20)).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString(body)).build();HttpResponse<String> r=HTTP.send(q,HttpResponse.BodyHandlers.ofString());if(r.statusCode()>=200&&r.statusCode()<300&&r.body().contains("\"user\"")){user=jval(r.body(),"name",id);home();}else msg(jval(r.body(),"error","Login não autorizado.")+"\nHTTP "+r.statusCode(),JOptionPane.ERROR_MESSAGE);}catch(Exception e){msg("Não foi possível conectar à API: "+e.getMessage(),JOptionPane.ERROR_MESSAGE);}}
+  static void home(){frame.getContentPane().removeAll();frame.setTitle(v("app.name","WFCSystem v1"));JMenuBar m=new JMenuBar();for(String x:new String[]{"Início","Imóveis","Clientes","Agentes","Prova social","Vendas","Usuários","Configurações"})m.add(new JMenu(x));JMenu out=new JMenu("Sair");out.addMenuListener(new javax.swing.event.MenuListener(){public void menuSelected(javax.swing.event.MenuEvent e){logout();}public void menuDeselected(javax.swing.event.MenuEvent e){}public void menuCanceled(javax.swing.event.MenuEvent e){}});m.add(out);frame.setJMenuBar(m);JPanel p=new JPanel(new BorderLayout(12,12));p.setBorder(BorderFactory.createEmptyBorder(24,24,24,24));JLabel w=new JLabel("Login realizado: "+user);w.setFont(new Font(Font.SANS_SERIF,Font.BOLD,18));p.add(w,BorderLayout.NORTH);JTextArea info=new JTextArea("WFCSystem v1\n\nAPI PHP conectada ao banco. Sessão mantida no aplicativo.\n\nFTP: "+v("ftp.host","ftp.wfcimoveis.com")+"\nImóveis: "+v("ftp.propertiesPath","/public_html/wfc_storage/wfc_imoveis")+"\nProva social: "+v("ftp.testimonialsPath","/public_html/wfc_storage/nossos_clientes/prova_social"));info.setEditable(false);info.setOpaque(false);info.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,14));p.add(info,BorderLayout.CENTER);JPanel a=new JPanel(new FlowLayout(FlowLayout.LEFT));JButton ftp=new JButton("Testar FTP");ftp.addActionListener(e->testFtp());JButton ses=new JButton("Verificar sessão");ses.addActionListener(e->session());a.add(ftp);a.add(ses);p.add(a,BorderLayout.SOUTH);frame.setContentPane(p);frame.setSize(780,480);frame.setLocationRelativeTo(null);frame.revalidate();frame.repaint();}
+  static void session(){try{HttpResponse<String> r=HTTP.send(HttpRequest.newBuilder(URI.create(api()+"/auth/me")).GET().build(),HttpResponse.BodyHandlers.ofString());msg(r.statusCode()==200?"Sessão válida.\n"+r.body():"Sessão expirada. HTTP "+r.statusCode(),r.statusCode()==200?JOptionPane.INFORMATION_MESSAGE:JOptionPane.WARNING_MESSAGE);}catch(Exception e){msg("Falha: "+e.getMessage(),JOptionPane.ERROR_MESSAGE);}}
+  static void logout(){try{HTTP.send(HttpRequest.newBuilder(URI.create(api()+"/auth/logout")).POST(HttpRequest.BodyPublishers.noBody()).build(),HttpResponse.BodyHandlers.ofString());}catch(Exception ignored){}CM.getCookieStore().removeAll();frame.dispose();loginScreen();}
+  static void testFtp(){if(v("ftp.username","").isBlank()||v("ftp.password","").isBlank()){msg("Configure ftp.username e ftp.password apenas no config.properties local.\nNunca faça commit dessas credenciais.",JOptionPane.WARNING_MESSAGE);return;}try(Ftp ftp=new Ftp(v("ftp.host","ftp.wfcimoveis.com"),Integer.parseInt(v("ftp.port","21")))){ftp.login(v("ftp.username",""),v("ftp.password",""));String p=v("ftp.propertiesPath","/public_html/wfc_storage/wfc_imoveis"),t=v("ftp.testimonialsPath","/public_html/wfc_storage/nossos_clientes/prova_social");msg("FTP autenticado.\n\n"+p+":\n"+ftp.list(p)+"\n"+t+":\n"+ftp.list(t),JOptionPane.INFORMATION_MESSAGE);}catch(Exception e){msg("Falha no FTP: "+e.getMessage(),JOptionPane.ERROR_MESSAGE);}}
+  static String api(){String x=v("api.baseUrl","https://wfcimoveis.com/sistema/api/v1").trim();return x.contains("SEU_")||x.contains("EXEMPLO")||x.contains("(")?"":x.replaceAll("/$","");}static String v(String k,String d){return C.getProperty(k,d);}static String esc(String x){return x.replace("\\","\\\\").replace("\"","\\\"").replace("\n","\\n");}static String jval(String j,String k,String d){Matcher m=Pattern.compile("\\\""+Pattern.quote(k)+"\\\"\\s*:\\s*\\\"([^\\\"]*)").matcher(j);return m.find()?m.group(1):d;}static void msg(String x,int t){JOptionPane.showMessageDialog(frame,x,v("app.name","WFCSystem v1"),t);}
+  static final class Ftp implements Closeable{final Socket s;final BufferedReader in;final BufferedWriter out;int code;String response;Ftp(String h,int p)throws IOException{s=new Socket();s.connect(new InetSocketAddress(h,p),15000);s.setSoTimeout(20000);in=new BufferedReader(new InputStreamReader(s.getInputStream(),StandardCharsets.ISO_8859_1));out=new BufferedWriter(new OutputStreamWriter(s.getOutputStream(),StandardCharsets.ISO_8859_1));read();need(220);}void login(String u,String p)throws IOException{cmd("USER "+u);if(code==331){cmd("PASS "+p);need(230);}else need(230);cmd("TYPE I");need(200);}String list(String path)throws IOException{cmd("CWD "+path);need(250);cmd("PASV");Matcher m=Pattern.compile("\\((\\d+),(\\d+),(\\d+),(\\d+),(\\d+),(\\d+)\\)").matcher(response);if(!m.find())throw new IOException("modo passivo não disponível");String h=m.group(1)+"."+m.group(2)+"."+m.group(3)+"."+m.group(4);int p=Integer.parseInt(m.group(5))*256+Integer.parseInt(m.group(6));try(Socket d=new Socket()){d.connect(new InetSocketAddress(h,p),10000);cmd("LIST");if(code!=150&&code!=125)throw new IOException(response);String x=new String(d.getInputStream().readAllBytes(),StandardCharsets.UTF_8);read();return x.isBlank()?"(vazia)":x;}}void cmd(String x)throws IOException{out.write(x+"\r\n");out.flush();read();}void read()throws IOException{String x=in.readLine();if(x==null)throw new EOFException("FTP encerrou a conexão");response=x;try{code=Integer.parseInt(x.substring(0,3));}catch(Exception e){throw new IOException(x);}if(x.length()>3&&x.charAt(3)=='-'){String end=x.substring(0,3)+" ";do{x=in.readLine();if(x==null)throw new EOFException();response=x;}while(!x.startsWith(end));}}void need(int n)throws IOException{if(code!=n)throw new IOException(response);}public void close()throws IOException{try{cmd("QUIT");}finally{s.close();}}}
 }

@@ -1,9 +1,18 @@
-# Copie este arquivo para config.properties e preencha apenas os valores do seu ambiente.
+# Copie este arquivo para config.properties. O aplicativo já usa a API PHP publicada.
 app.name=WFCSystem v1
-# API HTTP/HTTPS que expõe POST /auth/login e retorna JSON contendo token em caso de sucesso.
-api.baseUrl=https://SEU_BACKEND_EXEMPLO
+# A API usa sessão HTTP; não é necessário token JWT nesta primeira versão.
+api.baseUrl=https://wfcimoveis.com/sistema/api/v1
 support.name=Suporte WFC Imóveis
 support.email=defina-o-email-de-suporte
 support.phone=defina-o-telefone-de-suporte
-# Não coloque senhas, CPF, service_role ou credenciais FTP neste arquivo.
-# FTP deve ser configurado posteriormente em um cliente seguro, com usuário restrito à pasta de mídia.
+# FTP: preencha somente no arquivo local config.properties, nunca no Git.
+# HostGator informado no acesso ao cPanel; confirme no painel caso o provedor forneça outro host FTP.
+ftp.host=br968.hostgator.com.br
+ftp.port=21
+ftp.username=
+ftp.password=
+ftp.basePath=/public_html/wfc_storage
+ftp.propertiesPath=/public_html/wfc_storage/wfc_imoveis
+ftp.testimonialsPath=/public_html/wfc_storage/nossos_clientes/prova_social
+# Use usuário FTP dedicado, limitado às pastas de mídia. Não coloque CPF,
+# senha do banco, service_role ou senha FTP neste arquivo de exemplo.

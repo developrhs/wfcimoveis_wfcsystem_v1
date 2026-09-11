@@ -19,6 +19,12 @@ Também existe um `start-wfcsystem.bat` para Windows.
 
 ## Login
 
+O arquivo `config.properties.example` já aponta para a API PHP publicada:
+
+```text
+https://wfcimoveis.com/sistema/api/v1
+```
+
 O aplicativo envia um `POST` JSON para:
 
 ```text
@@ -28,17 +34,23 @@ O aplicativo envia um `POST` JSON para:
 com o corpo:
 
 ```json
-{"username":"...","password":"..."}
+{"identity":"...","password":"..."}
 ```
 
-A API deverá responder HTTP 200 com JSON contendo pelo menos `token`. O cliente não acessa o MySQL diretamente e não contém senha de banco.
+A API atual consulta a tabela de usuários no servidor, valida a senha com `password_verify`, cria uma sessão HTTP e retorna o objeto `user`. O aplicativo mantém o cookie de sessão e possui o botão **Verificar sessão**. O cliente não acessa o MySQL diretamente e não contém senha de banco.
+
+### Pré-requisito no HostGator
+
+O backend PHP precisa ter `deploy/wfc_sistema/api/config/local.php` criado no servidor, fora do Git, com `WFC_DB_HOST`, `WFC_DB_NAME`, `WFC_DB_USER` e `WFC_DB_PASS` correspondentes ao banco. Sem esse arquivo ou variáveis equivalentes, a rota `/api/v1/health` retorna indisponibilidade e o login não poderá funcionar. O endpoint de saúde foi testado durante esta atualização e o servidor respondeu `503`, indicando que essa configuração ainda precisa ser conferida no HostGator.
 
 ## FTP e imagens
 
-As pastas são configuradas em `config.properties`. Use um usuário FTP dedicado, restrito a `wfc_storage`. Não coloque senha FTP neste repositório ou no ZIP público; o campo deverá ser preenchido localmente no próximo módulo.
+As pastas são configuradas em `config.properties`. Use um usuário FTP dedicado, restrito a `wfc_storage`. Não coloque senha FTP neste repositório ou no ZIP público; os campos `ftp.username` e `ftp.password` devem ser preenchidos somente no arquivo local `config.properties`.
 
 - Imóveis: `/public_html/wfc_storage/wfc_imoveis`
 - Prova social: `/public_html/wfc_storage/nossos_clientes/prova_social`
+
+Depois do login, o botão **Testar FTP** autentica no servidor em modo passivo e lista as duas pastas determinadas. Nesta versão ele não envia, altera ou remove arquivos.
 
 ## Próximas extensões
 
