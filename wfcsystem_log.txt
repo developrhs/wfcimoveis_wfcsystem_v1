@@ -39,3 +39,10 @@ Após corrigir o backend, validar novamente `/health` esperando HTTP 200 e entã
 
 - Nova verificação segura de `GET https://wfcimoveis.com/sistema/api/v1/health`: HTTP `503`, sem autenticação e sem envio de senha; o backend ainda não comprova conexão MySQL funcional.
 - `mvn test` concluído com sucesso e o manifesto do JAR confirma `Main-Class: com.wfcimoveis.wfcsystem.Main`.
+
+## 2026-09-11 15:43 (America/Sao_Paulo)
+
+- Criada a página `maintenance.html`/`index.html` de manutenção, com previsão pública até 30/09/2026 e atendimento via WhatsApp oficial `+55 62 99511-1648`.
+- O contato foi reaproveitado do código existente do site; nenhuma credencial foi incluída nos arquivos.
+- A inspeção do cPanel confirmou que `public_html` contém `wfc-asset-patch.zip`, enquanto `cwcimoveis.com` e `wfc_sistema` aparecem vazios no Gerenciador de Arquivos; portanto, a troca do `index.html` não foi feita em diretório não confirmado.
+- O domínio continua respondendo uma aplicação React/Vite; a publicação definitiva da manutenção requer confirmar o document root/Application Manager efetivo.
