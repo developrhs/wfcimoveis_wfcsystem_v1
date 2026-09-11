@@ -46,3 +46,14 @@ Após corrigir o backend, validar novamente `/health` esperando HTTP 200 e entã
 - O contato foi reaproveitado do código existente do site; nenhuma credencial foi incluída nos arquivos.
 - A inspeção do cPanel confirmou que `public_html` contém `wfc-asset-patch.zip`, enquanto `cwcimoveis.com` e `wfc_sistema` aparecem vazios no Gerenciador de Arquivos; portanto, a troca do `index.html` não foi feita em diretório não confirmado.
 - O domínio continua respondendo uma aplicação React/Vite; a publicação definitiva da manutenção requer confirmar o document root/Application Manager efetivo.
+
+## 2026-09-11 15:58 (America/Sao_Paulo)
+
+- Iniciada a versão 0.2.0 do WFCSystem v1 com banco local SQLite em `~/.wfcsystem/wfcsystem.db`.
+- Adicionadas as tabelas locais `app_meta`, `local_records` e `sync_queue`, com fila para alterações offline.
+- Adicionado cofre local `~/.wfcsystem/credentials.vault`, protegido por PBKDF2-HMAC-SHA256 e AES-256-GCM; a senha-mestra não é persistida.
+- Adicionada tela de configuração para cPanel, FTP, phpMyAdmin e MySQL administrativo. Os valores ficam fora do JAR, fora do Git e não são escritos em logs.
+- Adicionado modo offline, botão de sincronização e tentativa automática a cada 60 segundos.
+- Implementados os clientes HTTP para `POST /sync/push` e `GET /sync/pull?since=...`; enquanto a API não disponibilizar esses endpoints, as alterações permanecem preservadas na fila SQLite.
+- Build `mvn clean test package` aprovado com JDK 17; o artefato recomendado é o JAR standalone com o driver SQLite incluído.
+- Teste de fumaça confirmou a criação de `wfcsystem.db` em um diretório de usuário temporário.

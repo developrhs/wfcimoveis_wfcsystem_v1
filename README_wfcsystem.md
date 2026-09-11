@@ -2,28 +2,66 @@
 
 ## Objetivo
 
-Aplicação desktop Java Swing para a WFC Imóveis. O desktop autentica pela API PHP publicada em `https://wfcimoveis.com/sistema/api/v1`, mantém a sessão HTTP e não acessa o MySQL diretamente.
+O WFCSystem v1 é uma aplicação desktop Java Swing para a WFC Imóveis. A versão 0.2.0 acrescenta banco local SQLite, funcionamento offline, cofre local criptografado e sincronização automática com a API HTTPS.
 
-## Build
+## Build e execução
 
 Requisitos: Java 17+ e Maven 3.9+.
 
 ```bash
-cp config.properties.example config.properties
-mvn clean package
-java -jar target/wfcsystem-v1-0.1.2.jar
+mvn clean test package
+java -jar target/wfcsystem-v1-0.2.0-standalone.jar
 ```
 
-## Login e banco
+O artefato `standalone` já inclui o driver SQLite. O JAR comum não é o pacote recomendado para distribuição.
 
-A aplicação verifica `/health` antes de enviar o login. Se a API retornar `DB_CONNECTION_FAILED` ou `DB_CONFIG_MISSING`, a correção deve ser feita no servidor, em `config/local.php` ou nas variáveis de ambiente da API: `WFC_DB_HOST`, `WFC_DB_NAME`, `WFC_DB_USER` e `WFC_DB_PASS`.
+## Banco local
 
-Para a API PHP hospedada no mesmo ambiente, usar o host MySQL indicado no cPanel (em muitos planos, `localhost`), o nome completo do banco e usuário com o prefixo da conta, a senha exclusiva do usuário MySQL e a porta `3306`. O MySQL Workbench, quando acessa externamente, também exige que o IP público seja liberado em **Remote MySQL** e usa o nome do servidor do plano; essa regra é do acesso externo e não deve levar o desktop a conectar diretamente no banco.
+O banco é criado automaticamente em:
 
-## FTP
+```text
+~/.wfcsystem/wfcsystem.db
+```
 
-As credenciais FTP ficam somente no `config.properties` local. Não usar senha de cPanel no repositório e preferir usuário FTP dedicado, limitado ao armazenamento de mídia.
+As tabelas locais incluem `app_meta`, `local_records` e `sync_queue`. O modo offline permite abrir a aplicação, registrar alterações locais e mantê-las em fila até que a API esteja disponível.
 
-## Diagnóstico atual
+O banco local não armazena senhas de cPanel, FTP, phpMyAdmin ou MySQL.
 
-Consulte `wfcsystem_log.txt`. Na última validação pública, `/health` retornou HTTP 503 com `DB_CONNECTION_FAILED`, confirmando que a aplicação desktop precisa aguardar a correção da configuração/conectividade do banco na API.
+## Cofre de credenciais
+
+A tela **Configurações > Credenciais criptografadas** permite cadastrar dados operacionais no computador autorizado. O arquivo é salvo em:
+
+```text
+~/.wfcsystem/credentials.vault
+```
+
+O conteúdo é protegido com PBKDF2-HMAC-SHA256 e AES-256-GCM. A senha-mestra não é salva. As credenciais não são exibidas em logs, não entram no Git e não são incluídas no JAR ou no ZIP de distribuição.
+
+A tela contempla campos para cPanel, FTP, phpMyAdmin e conexão administrativa MySQL, mas a sincronização do sistema usa a API HTTPS, não uma conexão direta do desktop ao MySQL.
+
+## Sincronização automática
+
+Após o login ou abertura do modo offline, o aplicativo tenta sincronizar a cada 60 segundos e também possui o botão **Sincronizar agora**.
+
+O contrato esperado da API é:
+
+```text
+POST /sync/push
+Content-Type: application/json
+{"items":[{"queueId":1,"entityType":"imovel","entityId":"123","operation":"UPSERT","payload":{},"baseVersion":0}]}
+```
+
+Para o recebimento incremental:
+
+```text
+GET /sync/pull?since=<ISO-8601>
+{"items":[{"entityType":"imovel","entityId":"123","version":4,"payload":{}}]}
+```
+
+Se esses endpoints ainda não existirem na API PHP, o aplicativo preserva as alterações no SQLite e informa que o envio ou recebimento precisa ser habilitado no servidor. A implementação do servidor deve validar sessão, permissões, versão base, conflitos e payload antes de alterar o MySQL.
+
+## Login e banco online
+
+O aplicativo verifica `/health` antes de enviar o login. Se a API retornar `DB_CONNECTION_FAILED` ou `DB_CONFIG_MISSING`, a correção deve ser feita no servidor, em `config/local.php` ou nas variáveis privadas da API: `WFC_DB_HOST`, `WFC_DB_NAME`, `WFC_DB_USER` e `WFC_DB_PASS`.
+
+O desktop continua acessando o sistema por HTTPS. As credenciais administrativas salvas no cofre são configurações locais para uso autorizado e não substituem a autenticação da API.
