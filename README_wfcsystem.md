@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-O WFCSystem v1 é uma aplicação desktop Java Swing para a WFC Imóveis. A versão 0.2.0 acrescenta banco local SQLite, funcionamento offline, cofre local criptografado e sincronização automática com a API HTTPS.
+O WFCSystem v1 é uma aplicação desktop Java Swing para a WFC Imóveis. A versão 0.3.0 consolida o banco local SQLite, o funcionamento offline, o cofre local criptografado, as tabelas de gestão e a fila local de imagens antes do envio ao FTP.
 
 ## Build e execução
 
@@ -10,64 +10,52 @@ Requisitos: Java 17+ e Maven 3.9+.
 
 ```bash
 mvn clean test package
-java -jar target/wfcsystem-v1-0.2.0-standalone.jar
+java -jar target/wfcsystem-v1-0.3.0-standalone.jar
 ```
 
-O artefato `standalone` já inclui o driver SQLite. O JAR comum não é o pacote recomendado para distribuição.
+O artefato `standalone` inclui SQLite e a biblioteca Apache Commons Net para FTP.
 
-## Banco local
+## Banco local e tabelas
 
-O banco é criado automaticamente em:
+O banco é criado automaticamente em `~/.wfcsystem/wfcsystem.db`. As principais tabelas são `app_meta`, `local_records`, `sync_queue`, `app_users` e `image_queue`.
+
+As abas **Imóveis**, **Clientes**, **Agentes** e **Vendas** permitem salvar, atualizar, excluir e recarregar registros locais em formato JSON. As alterações entram na fila de sincronização. A aba **Usuários** lista os usuários locais e permite que um operador autorizado altere o perfil entre `Administrador`, `Corretor` e `Atendimento`, além do status ativo/inativo.
+
+O banco local não armazena senhas de cPanel, FTP, phpMyAdmin ou MySQL. A alteração de perfil/status é local nesta etapa e deverá ser sincronizada com endpoint administrativo próprio quando essa API for disponibilizada.
+
+## Fila local de imagens
+
+Ao iniciar, o aplicativo cria a pasta temporária:
 
 ```text
-~/.wfcsystem/wfcsystem.db
+<java.io.tmpdir>/wfcsystem-images
 ```
 
-As tabelas locais incluem `app_meta`, `local_records` e `sync_queue`. O modo offline permite abrir a aplicação, registrar alterações locais e mantê-las em fila até que a API esteja disponível.
+As imagens selecionadas nas telas são copiadas para subpastas temporárias e registradas na tabela `image_queue`. Apenas JPG, JPEG, PNG, WEBP e GIF são aceitos. A fila preserva o arquivo em caso de falha e só o remove depois que o servidor FTP confirmar o recebimento.
 
-O banco local não armazena senhas de cPanel, FTP, phpMyAdmin ou MySQL.
-
-## Usuários locais
-
-Na primeira inicialização, o SQLite cadastra os quatro usuários operacionais fornecidos para o sistema, preservando nome, CPF, e-mail, WhatsApp, perfil e CRECI. As senhas iniciais são gravadas apenas como hashes PBKDF2 com salt individual; não há senha em texto aberto no código, no JAR ou no log.
-
-O modo offline não é um atalho: username vazio, usuário inexistente, usuário inativo ou senha incorreta são rejeitados. O primeiro username cadastrado aparece preenchido apenas como conveniência visual, enquanto o campo de senha permanece vazio. A autenticação online continua sendo preferencial; o fallback local só ocorre quando a API está indisponível.
-
-## Cofre de credenciais
-
-A tela **Configurações > Credenciais criptografadas** permite cadastrar dados operacionais no computador autorizado. O arquivo é salvo em:
+A sincronização FTP usa modo passivo e transferência binária. As pastas padrão são:
 
 ```text
-~/.wfcsystem/credentials.vault
+/public_html/wfc_storage/wfc_imoveis
+/public_html/wfc_storage/nossos_clientes/prova_social
 ```
 
-O conteúdo é protegido com PBKDF2-HMAC-SHA256 e AES-256-GCM. A senha-mestra não é salva. As credenciais não são exibidas em logs, não entram no Git e não são incluídas no JAR ou no ZIP de distribuição.
+O caminho da imagem deverá ser associado ao JSON do registro quando o contrato da API de mídia estiver definido. Nesta primeira consolidação, a fila garante o armazenamento local e o envio seguro da imagem.
 
-A tela contempla campos para cPanel, FTP, phpMyAdmin e conexão administrativa MySQL, mas a sincronização do sistema usa a API HTTPS, não uma conexão direta do desktop ao MySQL.
+## Credenciais
 
-## Sincronização automática
+As credenciais operacionais devem ser cadastradas em **Configurações > Credenciais criptografadas**. Nenhuma senha deve ser colocada no repositório, no JAR, no ZIP público ou no log. A senha do cPanel não deve ser presumida como senha FTP.
 
-Após o login ou abertura do modo offline, o aplicativo tenta sincronizar a cada 60 segundos e também possui o botão **Sincronizar agora**.
+## Sincronização
 
-O contrato esperado da API é:
+Após o login ou abertura do modo offline, o aplicativo tenta sincronizar a cada 60 segundos e também possui o botão **Sincronizar agora**. Os registros usam `POST /sync/push` e `GET /sync/pull?since=...`. As imagens pendentes são enviadas ao FTP durante a sincronização.
 
-```text
-POST /sync/push
-Content-Type: application/json
-{"items":[{"queueId":1,"entityType":"imovel","entityId":"123","operation":"UPSERT","payload":{},"baseVersion":0}]}
-```
+Se os endpoints ainda não existirem na API PHP, os registros permanecem no SQLite. O envio de arquivos ao FTP exige host, usuário, senha e caminhos válidos no cofre local.
 
-Para o recebimento incremental:
+## Arquitetura oficial e operação permanente
 
-```text
-GET /sync/pull?since=<ISO-8601>
-{"items":[{"entityType":"imovel","entityId":"123","version":4,"payload":{}}]}
-```
+O produto é composto por três camadas separadas. `https://wfcimoveis.com/` é o site público destinado aos clientes e não deve ser substituído pelo painel. `https://wfcimoveis.com/sistema/` é o sistema web permanente, com login e gestão de imóveis, clientes, prova social e usuários. O **WfcSystem** é o aplicativo Java local, usado para trabalhar sem internet e sincronizar posteriormente.
 
-Se esses endpoints ainda não existirem na API PHP, o aplicativo preserva as alterações no SQLite e informa que o envio ou recebimento precisa ser habilitado no servidor. A implementação do servidor deve validar sessão, permissões, versão base, conflitos e payload antes de alterar o MySQL.
+O desktop usa como base padrão `https://wfcimoveis.com/sistema/api/v1`. Quando a internet está indisponível, os cadastros permanecem no SQLite e as imagens permanecem em `<java.io.tmpdir>/wfcsystem-images`; quando a conexão retorna, o desktop envia registros pela API HTTPS e imagens pela fila FTP. A raiz pública do site nunca é destino de upload do desktop.
 
-## Login e banco online
-
-O aplicativo verifica `/health` antes de enviar o login. Se a API retornar `DB_CONNECTION_FAILED` ou `DB_CONFIG_MISSING`, a correção deve ser feita no servidor, em `config/local.php` ou nas variáveis privadas da API: `WFC_DB_HOST`, `WFC_DB_NAME`, `WFC_DB_USER` e `WFC_DB_PASS`.
-
-O desktop continua acessando o sistema por HTTPS. As credenciais administrativas salvas no cofre são configurações locais para uso autorizado e não substituem a autenticação da API.
+A publicação permanente do painel deve manter os arquivos em `/home3/cwcimo17/public_html/wfc_sistema/`, expostos pelo endereço `/sistema/`. Uma atualização do painel não deve apagar nem substituir arquivos do site público em `public_html`.

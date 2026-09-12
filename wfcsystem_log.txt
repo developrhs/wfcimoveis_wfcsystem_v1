@@ -67,3 +67,30 @@ Após corrigir o backend, validar novamente `/health` esperando HTTP 200 e entã
 - Em indisponibilidade da API, o login online tenta fallback local somente após validar o cadastro e a senha no banco local.
 - O primeiro username aparece pré-preenchido por conveniência; a senha permanece vazia e precisa ser digitada.
 - Teste de fumaça confirmou login válido aceito e senha inválida/usuário inexistente rejeitados.
+
+## 2026-09-11 20:33 (America/Sao_Paulo)
+
+- Iniciada a consolidação da base da versão 0.3.0 no repositório versionado `developrhs/wfcimoveis_wfcsystem_v1`, usando o pacote enviado apenas como referência de funcionalidades.
+- Adicionadas ao SQLite as tabelas e operações locais para gestão de imóveis, clientes, agentes, vendas e usuários; a aba de usuários permite alterar perfil (`Administrador`, `Corretor` ou `Atendimento`) e status ativo/inativo.
+- Adicionada a tabela `image_queue`, com status pendente/enviada, caminho temporário, entidade relacionada e mensagem de erro.
+- Implementada a criação automática de `<java.io.tmpdir>/wfcsystem-images` e subpastas para imagens. O arquivo temporário só é removido após confirmação do upload FTP.
+- Implementado serviço de FTP em modo passivo e binário usando Apache Commons Net; nenhuma credencial foi gravada no código, no Git ou neste log.
+- Integrado painel Swing com tabelas para os módulos de gestão e seleção de imagens no cadastro de imóveis.
+- Próxima validação: compilar com Maven, executar testes de schema/fila, revisar o JAR standalone e só depois realizar teste FTP não destrutivo com credenciais carregadas pelo cofre local.
+
+## 2026-09-11 20:35 (America/Sao_Paulo)
+
+- Instalado o JDK 21, pois o ambiente possuía apenas o runtime Java; `mvn clean test package` foi concluído com sucesso.
+- Gerados `target/wfcsystem-v1-0.3.0.jar` e `target/wfcsystem-v1-0.3.0-standalone.jar`.
+- O manifesto do standalone confirma `Main-Class: com.wfcimoveis.wfcsystem.Main`; o pacote inclui `AppDatabase`, `ManagementPanel`, `ImageStaging`, SQLite e `org.apache.commons.net.ftp.FTPClient`.
+- SHA-256 do JAR comum 0.3.0: `7f4aee653a0e6437c161874084c75c4e237b6258ab57d51998fa9723ecb9f3b6`.
+- SHA-256 do JAR standalone 0.3.0: `2b9cf11c179945c6bdc2419bf5b3bfad98f7dce27ca32e16e1be67a6c2a0eebc`.
+- O exemplo `config.properties.example` foi alinhado ao host FTP informado `162.241.2.254`; usuário e senha permanecem vazios e nenhuma senha foi gravada nos arquivos versionados.
+- A compilação foi validada; ainda falta teste de execução gráfica e teste FTP não destrutivo com credenciais carregadas pelo cofre local.
+
+## 2026-09-12 08:44 (America/Sao_Paulo)
+
+- Alinhada a arquitetura oficial: `https://wfcimoveis.com/` é o site público para clientes; `https://wfcimoveis.com/sistema/` é o painel web permanente; `WfcSystem` é o aplicativo Java local para operação offline e sincronização posterior.
+- Confirmado que o painel deve ser instalado exclusivamente em `/home3/cwcimo17/public_html/wfc_sistema/`; a raiz pública existente não deve ser limpa, substituída ou usada como staging.
+- Confirmado que o desktop usa a API HTTPS em `https://wfcimoveis.com/sistema/api/v1`, mantém registros no SQLite quando offline e envia imagens pendentes via FTP quando a conexão retorna.
+- Encerrado o servidor temporário de distribuição do pacote; a publicação permanente depende da instalação do pacote no cPanel/HostGator e da configuração protegida do banco PHP.
