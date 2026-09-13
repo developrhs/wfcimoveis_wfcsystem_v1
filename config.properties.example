@@ -1,6 +1,6 @@
 # Copie este arquivo para config.properties. O aplicativo usa a API PHP publicada.
 app.name=WFCSystem v1
-app.version=0.2.0
+app.version=0.3.0
 # A API usa sessão HTTP; não é necessário token JWT nesta primeira versão.
 api.baseUrl=https://wfcimoveis.com/sistema/api/v1
 # O cliente verifica /health antes do login; o MySQL online é acessado somente pela API PHP.
